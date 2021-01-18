@@ -81,18 +81,30 @@ class PixelArt:
         self.displayImage(im = os.path.join(os.path.dirname(__file__),"./current.png"))
     
     def addCursor(self):
-        if(self.cursorx>1):
-            for i in range(0,self.cursorx-1):
-                self.image.putpixel((i,self.cursory), (255, 0, 0))
-        if(self.cursorx<15):
-            for i in range(self.cursorx+2,16):
-                self.image.putpixel((i,self.cursory), (0, 255, 255))
-        if(self.cursory>1):
-            for i in range(0,self.cursory-1):
-                self.image.putpixel((self.cursorx,i), (0, 0, 255))
-        if(self.cursory<15):
-            for i in range(self.cursory+2,16):
-                self.image.putpixel((self.cursorx,i), (255, 255, 0))
+        diag_tl = min(self.cursorx,self.cursory)
+        if(diag_tl>1):
+            for i in range(0,diag_tl-1):
+                self.image.putpixel((self.cursorx-i-2,self.cursory-i-2), (255, 0, 0))
+        self.image.putpixel((self.cursorx-2,self.cursory-1), (255, 0, 0))
+        self.image.putpixel((self.cursorx-1,self.cursory-2), (255, 0, 0))
+        diag_bl = min(self.cursorx,15-self.cursory)
+        if(diag_bl>1):
+            for i in range(0,diag_bl-1):
+                self.image.putpixel((self.cursorx-i-2,self.cursory+i+2), (0, 255, 0))
+        self.image.putpixel((self.cursorx-2,self.cursory+1),(0, 255, 0))
+        self.image.putpixel((self.cursorx-1,self.cursory+2), (0, 255, 0))
+        diag_tr = min(15-self.cursorx,self.cursory)
+        if(diag_tr>1):
+            for i in range(0,diag_tr-1):
+                self.image.putpixel((self.cursorx+i+2,self.cursory-i-2), (0, 255, 0))
+        diag_br = min(15-self.cursorx,15-self.cursory)
+        self.image.putpixel((self.cursorx+2,self.cursory-1), (0, 255, 0))
+        self.image.putpixel((self.cursorx+1,self.cursory-2), (0, 255, 0))
+        if(diag_br>1):
+            for i in range(0,diag_br-1):
+                self.image.putpixel((self.cursorx+i+2,self.cursory+i+2), (255, 0, 0))
+        self.image.putpixel((self.cursorx+2,self.cursory+1), (255, 0, 0))
+        self.image.putpixel((self.cursorx+1,self.cursory+2), (255, 0, 0))
 
     def displayImage(self,im):
         self.display.show_image(im)
