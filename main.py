@@ -6,6 +6,8 @@ def main():
     device = p.Pixoo()
     device.connect()
     device.show_scoreboard(1,2)
-    pixelArtGame = pa.PixelArt(device,"branlyst")
+    user="branlyst"
+    device.displayText("Welcome home")
+    # pixelArtGame = pa.PixelArt(device,user)
     
 main()

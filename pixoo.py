@@ -2,9 +2,11 @@
 
 import logging, math, itertools, select, socket, time
 import bluetooth
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import sys
 import os
+import time
+
 
 class Pixoo:
     """Class Pixoo encapsulates the Pixoo communication."""
@@ -346,4 +348,14 @@ class Pixoo:
         while self.receive(512) == 512:
             self.drop_message_buffer()
 
-
+    def displayText(self,text):
+        xsize = ImageFont.load_default().getsize(text)[0]+32
+        im = Image.new(mode='RGB',size=(xsize,16))    
+        imDraw = ImageDraw.Draw(im)                                                        
+        imDraw.text((16,2), text, (237, 230, 211))
+        for i in range(xsize-15):
+            crop_rectangle = (i, 0, i+16, 16)
+            cropped_im = im.crop(crop_rectangle)
+            cropped_im.save('current.png')
+            self.show_image(os.path.join(os.path.dirname(__file__),"./current.png"))
+            time.sleep(1/40)   
