@@ -7,7 +7,7 @@ def main():
     device.connect()
     device.show_scoreboard(1,2)
     user="branlyst"
-    device.displayText("Welcome home")
-    # pixelArtGame = pa.PixelArt(device,user)
+    device.displayText("Hello "+user)
+    pixelArtGame = pa.PixelArt(device,user)
     
 main()

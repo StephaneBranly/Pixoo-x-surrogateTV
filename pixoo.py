@@ -358,4 +358,4 @@ class Pixoo:
             cropped_im = im.crop(crop_rectangle)
             cropped_im.save('current.png')
             self.show_image(os.path.join(os.path.dirname(__file__),"./current.png"))
-            time.sleep(1/40)   
+            time.sleep(1/20)   
