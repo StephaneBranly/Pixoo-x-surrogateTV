@@ -4,25 +4,30 @@ import os
 from datetime import datetime
 
 class PixelArt:
-    def __init__(self,display,user):
+    def __init__(self,display,user="NaN"):
         self.image = Image.new('RGBA', (16, 16), color = 'black')
         self.image.save('svg.png')
         self.cursorx=8
         self.cursory=8
         self.showCursor=True
         self.display=display
-        self.generateImage()
-        self.loop = True
         self.user = user
-        self.run()
         
+    def setUser(self, user="Nan"):
+        self.user = user
 
     def closeGame(self):
         now = datetime.now() 
-        date_time = now.strftime("_%Y%m%d_%H-%M-%S")
+        date_time = now.strftime("_%Y%m%d_%Hh%Mm%Ss")
         filename = (self.user)+date_time+".png"
         self.image = Image.open(os.path.join(os.path.dirname(__file__),"svg.png"))
         self.image.save("pixelArts/"+filename)
+
+    def reset(self, user="Nan"):
+        if(user!=self.user):
+            self.image = Image.new('RGBA', (16, 16), color = 'black')
+            self.image.save('svg.png')
+        self.generateImage()
 
     def on_press(self,key):
         if key == pygame.K_LEFT:
@@ -62,6 +67,7 @@ class PixelArt:
         self.generateImage()
 
     def run(self):
+        self.loop = True
         pygame.init()
         pygame.display.set_mode((16, 16))
         pygame.display.set_caption("pixelArtGame")
