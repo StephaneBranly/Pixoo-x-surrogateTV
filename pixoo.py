@@ -1,6 +1,6 @@
 """Provides class Pixoo that encapsulates the Pixoo communication."""
 
-import logging, math, itertools, select, socket, time
+import logging, math, itertools, select, time
 import bluetooth
 from PIL import Image, ImageDraw, ImageFont
 import sys
@@ -25,14 +25,14 @@ class Pixoo:
     message_buf = []
     
     host = None
-    port = 1
+    port = 0
 
     def __init__(self, host=None, port=1, logger=None):
         self.type = "Pixoo"
         self.size = 16
         self.host = "11:75:58:BD:0C:34"
         self.port = 1
-        
+
         if logger is None:
             logger = logging.getLogger(self.type)
         self.logger = logger
@@ -46,14 +46,16 @@ class Pixoo:
 
         try:
             self.socket.connect((self.host, self.port))
+            self.socket.setblocking(1)
             self.socket_errno = 0
-        except socket.error as error:
+        except bluetooth.BluetoothError as error :
             self.socket_errno = error.errno
 
     def close(self):
         """Closes the connection to the Pixoo."""
         try:
-            self.socket.shutdown(socket.SHUT_RDWR)
+            self.socket.close()
+            self.socket = None
         except:
             pass
         self.socket.close()
@@ -63,7 +65,7 @@ class Pixoo:
         """Reconnects the connection to the Pixoo, if needed."""
         try:
             self.send_ping()
-        except socket.error as error:
+        except bluetooth.BluetoothError as error:
             self.socket_errno = error.errno
         
         retries = 1
@@ -78,25 +80,30 @@ class Pixoo:
 
     def receive(self, num_bytes=1024):
         """Receive n bytes of data from the Pixoo and put it in the input buffer. Returns the number of bytes received."""
-        self.socket.recv(num_bytes)
-        return 1
+        self.socket.settimeout(0.2)
+        data = self.socket.recv(num_bytes)
+        self.message_buf += data
+        return len(data)
+        
 
     def send_raw(self, data):
         """Send raw data to the Pixoo."""
         try:
             return self.socket.send(data)
-        except socket.error as error:
+        except bluetooth.BluetoothError as error:
             self.socket_errno = error.errno
             raise
 
     def send_payload(self, payload):
         """Send raw payload to the Pixoo. (Will be escaped, checksumed and messaged between 0x01 and 0x02."""
         msg = self.make_message(payload)
+        
         try:
-            return self.socket.send(bytes(msg))
-        except socket.error as error:
+            self.receive(self.socket.send(bytes(msg)))
+            self.drop_message_buffer()
+        except bluetooth.BluetoothError as error:
             self.socket_errno = error.errno
-            raise
+            # raise
 
     def send_command(self, command, args=None):
         """Send command with optional arguments"""
@@ -168,14 +175,8 @@ class Pixoo:
         with Image.open(image) as img:
             
             picture_frames = []
-            # palette = img.getpalette()
-            # img.show()
             try:
                 while True:
-                    # if not img.getpalette():
-                    #     img.putpalette(palette)
-
-                    # duration = img.info['duration']
                     new_frame = Image.new('RGBA', img.size)
                     new_frame.paste(img, (0, 0), img.convert('RGBA'))
                     picture_frames.append([new_frame, 1])
@@ -323,6 +324,7 @@ class Pixoo:
                 frame = self.make_framepart(framePartsSize, index, framePart)
                 self.send_command("set animation frame", frame)
                 index += 1
+                print("multiple frames")
         
         elif framesCount == 1:
             """Sending as Image"""
@@ -340,24 +342,27 @@ class Pixoo:
         while self.receive(512) == 512:
             self.drop_message_buffer()
 
-    def displayText(self,text,color=(230,0,0),icon=None):
-        print("display text")
-        xsize = ImageFont.load_default().getsize(text)[0]+32
+    def displayText(self,text,color1=(230,0,0),color2=(0,250,250),icon=None):
+        delta=0
+        if icon:
+            delta = 25
+        xsize = ImageFont.load_default().getsize(text)[0]+32+delta
         im = Image.new(mode='RGB',size=(xsize,16))    
         for i in range(16):
-            current_color = (int(color[0]/16*i),int(color[1]/16*i),int(color[2]/16*i))
+            current_color = (int(color1[0]+((color2[0]-color1[0])/16*i)),int(color1[1]+((color2[1]-color1[1])/16*i)),int(color1[2]+((color2[2]-color1[2])/16*i)))
             shape = [(0, i), (xsize, i)] 
             img1 = ImageDraw.Draw(im)   
             img1.line(shape, fill =current_color, width = 0) 
-
+        if icon:
+            iconIm = Image.open(icon)
+            im.paste(iconIm, (16,0),  iconIm.convert('RGBA'))
         imDraw = ImageDraw.Draw(im)           
-        imDraw.text((16,4), text, (30, 30, 30))
-        imDraw.text((16,3), text, (210, 200, 191))
+        imDraw.text((16+delta,4), text, (30, 30, 30))
+        imDraw.text((16+delta,3), text, (210, 200, 191))
         im.save('banner.png')
         for i in range(xsize-15):
             crop_rectangle = (i, 0, i+16, 16)
             cropped_im = im.crop(crop_rectangle)
             cropped_im.save('current.png')
             self.show_image(os.path.join(os.path.dirname(__file__),"./current.png"))
-            time.sleep(1/17)  
          
