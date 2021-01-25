@@ -2,8 +2,8 @@ from PIL import Image
 import pygame
 import os
 from datetime import datetime
-
-class PixelArt:
+from surrortgsdk.surrortg import Game
+class PixelArt(Game):
     def __init__(self,display,user="NaN"):
         self.image = Image.new('RGBA', (16, 16), color = 'black')
         self.image.save('svg.png')
@@ -12,6 +12,12 @@ class PixelArt:
         self.showCursor=True
         self.display=display
         self.user = user
+
+    async def on_init(self):
+        self.reset()
+
+    async def on_exit(self, reason, exception):
+        self.closeGame()
         
     def setUser(self, user="Nan"):
         self.user = user
