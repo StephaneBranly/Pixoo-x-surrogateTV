@@ -7,11 +7,14 @@ class PixelArt(Game):
     def __init__(self,display,user="NaN"):
         self.image = Image.new('RGBA', (16, 16), color = 'black')
         self.image.save('svg.png')
+        self.screen=None
         self.cursorx=8
         self.cursory=8
         self.showCursor=True
         self.display=display
         self.user = user
+        self.current = 1
+        self.colors = [(0,0,0),(255,255,255),(255,0,0),(255,127,0),(255,255,0),(127,255,0),(0,255,0),(0,255,127),(0,255,255),(0,127,255),(0,0,255),(127,0,255),(255,0,255),(255,0,127)]
 
     async def on_init(self):
         self.reset()
@@ -47,60 +50,51 @@ class PixelArt(Game):
         elif key == pygame.K_q:    #check if it is 'q' key
             self.loop=False
             self.closeGame()
-        elif key == pygame.K_y:
-            self.addPixelColor(255,255,0) 
-        elif key == pygame.K_e:
-            self.addPixelColor(0,0,0)
-        elif key == pygame.K_w:
-            self.addPixelColor(255,255,255) 
-        elif key == pygame.K_o:
-            self.addPixelColor(255,165,0) 
-        elif key == pygame.K_b:
-            self.addPixelColor(0,0,255) 
-        elif key == pygame.K_c:
-            self.addPixelColor(0,255,255)
-        elif key == pygame.K_g:
-            self.addPixelColor(0,255,0)
-        elif key == pygame.K_r:
-            self.addPixelColor(255,0,0)  
-        elif key == pygame.K_m:
-            self.addPixelColor(255,0,255)
-        elif key == pygame.K_p:
-            self.addPixelColor(128,0,128)  
-        elif key ==  pygame.K_h:
+        elif key == pygame.K_a:
+            self.current = (self.current - 1) % len(self.colors)
+        elif key == pygame.K_d:
+            self.current = (self.current + 1) % len(self.colors)
+        elif key ==  pygame.K_w:
+            self.addPixelColor(self.colors[self.current])
+        elif key ==  pygame.K_s:
             self.showCursor=self.showCursor+1
-      
         self.generateImage()
 
     def run(self):
         self.loop = True
         pygame.init()
-        pygame.display.set_mode((16, 16))
+        self.screen = pygame.display.set_mode((160, 160))
         pygame.display.set_caption("pixelArtGame")
+        
         while self.loop:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     self.on_press(event.key)
             
-    def addPixelColor(self,r,g,b):
-        self.image = Image.open(os.path.join(os.path.dirname(__file__),"./svg.png"))
-        self.image.putpixel((self.cursorx,self.cursory), (r, g, b))
+    def addPixelColor(self,rgb):
+        self.image = Image.open(os.path.join(os.path.dirname(__file__),"svg.png"))
+        self.image.putpixel((self.cursorx,self.cursory), rgb)
         self.image.save('svg.png')
 
     def generateImage(self):
-        self.image = Image.open(os.path.join(os.path.dirname(__file__),"./svg.png"))
+        self.image = Image.open(os.path.join(os.path.dirname(__file__),"svg.png"))
         if(self.showCursor%2):
             self.addCursor()
         self.image.save('current.png')
-        self.displayImage(im = os.path.join(os.path.dirname(__file__),"./current.png"))
+        self.displayImage(im = os.path.join(os.path.dirname(__file__),"current.png"))
     
     def addCursor(self):
-        positions = [[-2,-1],[-1,-2],[-2,1],[-1,2],[2,-1],[1,-2],[2,1],[1,2]]
+        positions = [[-1,-1],[-1,1],[1,1],[1,-1]]
         for position in positions:
             if self.cursorx + position[0] >= 0 and self.cursorx + position[0]  < 16:
                 if self.cursory + position[1] >= 0 and self.cursory + position[1] < 16:
-                     self.image.putpixel((self.cursorx + position[0],self.cursory+  position[1]), (255, 0, 0))
+                     self.image.putpixel((self.cursorx + position[0],self.cursory+  position[1]), self.colors[self.current])
        
     def displayImage(self,im):
         self.display.show_image(im)
+        if(self.screen!=None):
+            pyimage = pygame.image.load(im).convert_alpha()
+            self.screen.blit(pygame.transform.scale(pyimage,(160,160)),(0,0))
+            pygame.display.flip()
+            
 
